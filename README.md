@@ -1,6 +1,6 @@
 # Sistema de Reservas de Paquetes Turísticos
 
-Bienvenido al repositorio del **Sistema de Reservas de Paquetes Turísticos**, elkin una aplicación web diseñada para gestionar usuarios, paquetes turísticos, reservas y pagos de manera eficiente y segura. Este proyecto incluye tanto el backend con APIs REST como el frontend con paneles de administración y gestión de reservas.
+Bienvenido al repositorio del **Sistema de Reservas de Paquetes Turísticos**, una aplicación web diseñada para gestionar usuarios, paquetes turísticos, reservas y pagos de manera eficiente y segura. Este proyecto incluye tanto el backend con APIs REST como el frontend con paneles de administración y gestión de reservas.
 
 ---
 
