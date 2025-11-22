@@ -1,0 +1,11 @@
+# Importa los routers desde la carpeta Api
+from app.api.usuarios_api import router as usuarios_router
+from app.api.paquetes_api import router as paquetes_router
+from app.api.reservas_api import router as reservas_router
+
+# Lista de todos los routers a registrar en la aplicación
+ROUTERS = [
+    usuarios_router,   # /usuarios/...
+    paquetes_router,   # /paquetes/...
+    reservas_router    # /reservas/...
+]
