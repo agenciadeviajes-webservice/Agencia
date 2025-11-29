@@ -1,5 +1,5 @@
 # app/Api/paquetes_api.py (NUEVO ARCHIVO)
-from fastapi import APIRouter, Depends, status, Response
+from fastapi import APIRouter, Depends, status, Response, Path
 from sqlalchemy.orm import Session
 
 from app.database import SessionLocal
@@ -37,6 +37,28 @@ def crear_paquete(paquete: PaqueteCreate, response: Response, db: Session = Depe
     if not result.success:
         # Si la operación falla (400 por validación de fechas o 500 por error interno)
         # Seteamos el código HTTP de la respuesta con el error_code que nos da el servicio.
+        response.status_code = result.error_code
+    
+    return result
+
+@router.put("/{id_paquete}", response_model=APIResponse, status_code=status.HTTP_200_OK)
+def actualizar_paquete(
+    # 1. MOVER PAQUETE AL PRINCIPIO: Ahora es el primer argumento (obligatorio)
+    paquete: PaqueteCreate, 
+    
+    # 2. El resto de argumentos con valor por defecto van después
+    id_paquete: int = Path(..., gt=0), 
+    response: Response = Response(),
+    db: Session = Depends(get_db)
+):
+    """
+    [HU-03] Actualiza un paquete turístico existente por su ID.
+    """
+    service = PaquetesService(db)
+    result = service.actualizar_paquete(id_paquete, paquete)
+
+    if not result.success:
+        # Seteamos el código HTTP según el error (404, 400, o 500)
         response.status_code = result.error_code
     
     return result
