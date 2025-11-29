@@ -22,7 +22,7 @@ class UserDB(Base):
     telefono = Column(String, nullable=False) # Agregado HU-05
     email = Column(String, unique=True, nullable=False)
     fecha_nacimiento = Column(Date, nullable=False) # Agregado HU-05
-    password_hashed = Column(String, nullable=False) # Agregado HU-06 (Login)
+    password_hashed = Column(String, nullable=True) # Agregado HU-06 (Login)
 
 
 # 2. TABLA PAQUETES (HU-04)
@@ -40,12 +40,16 @@ class PaqueteDB(Base):
 
 class ReservaDB(Base):
     __tablename__ = 'reserva'
-
     id = Column(Integer, primary_key=True, index=True)
-    # Necesario para validar el monto del pago
+    id_cliente = Column(Integer, ForeignKey('usuarios.id'), nullable=False) # Cliente que reserva
+    id_paquete = Column(Integer, ForeignKey('paquetes.id'), nullable=False) # Paquete reservado
+    numero_personas = Column(Integer, nullable=False)
     monto_total = Column(Float, nullable=False) 
-    # Necesario para verificar el estado y actualizarlo
+    metodo_pago = Column(String) # Lo pide la solicitud, aunque el pago se hace después
     estado = Column(String, default="Pendiente", nullable=False) 
+    # Relaciones para validación
+    cliente = relationship("UserDB")
+    paquete = relationship("PaqueteDB")
 
 # --- MODELO DE PAGO (Para registrar la transacción) ---
 class PagoDB(Base):
