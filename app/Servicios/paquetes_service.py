@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from app.repositorio.paquetes_repository import PaquetesRepository
 from app.dominio.paquetes_model import PaqueteListResponse, PaqueteListItem, PaqueteCreate, APIResponse, PaqueteData
 from app.database import PaqueteDB
-from fastapi import status # <-- Nuevo import
+from fastapi import status 
 from typing import List
 
 class PaquetesService:
@@ -75,5 +75,52 @@ class PaquetesService:
             return APIResponse(
                 success=False,
                 message="No fue posible registrar el paquete turístico en este momento.",
+                error_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        
+    def actualizar_paquete(self, paquete_id: int, paquete_data: PaqueteCreate) -> APIResponse:
+        
+        # 1. Verificar Existencia (HU-03: 404)
+        paquete_existente = self.repository.obtener_por_id(paquete_id)
+        if not paquete_existente:
+            return APIResponse(
+                success=False,
+                message="No se encontró el paquete turístico o no fue posible actualizarlo.",
+                error_code=status.HTTP_404_NOT_FOUND
+            )
+
+        # 2. Validación de Negocio: Fechas Coherentes (HU-03: 400)
+        if paquete_data.fecha_inicio >= paquete_data.fecha_fin:
+            return APIResponse(
+                success=False,
+                message="Error en los datos enviados. La fecha de fin debe ser posterior a la de inicio.",
+                error_code=status.HTTP_400_BAD_REQUEST 
+            )
+
+        # 3. Preparar datos y Actualizar
+        try:
+            # Convertir Pydantic a diccionario para pasar al Repositorio
+            datos_a_actualizar = paquete_data.model_dump()
+            
+            paquete_actualizado = self.repository.actualizar_paquete(
+                paquete_existente, 
+                datos_a_actualizar
+            )
+
+            # 4. Éxito (HTTP 200)
+            data_respuesta = PaqueteData.model_validate(paquete_actualizado)
+            
+            return APIResponse(
+                success=True,
+                message="Paquete turístico actualizado correctamente",
+                data=data_respuesta
+            )
+            
+        except Exception as e:
+            # 5. Error Interno (HU-03: 500)
+            print(f"Error al actualizar paquete ID {paquete_id}: {e}")
+            return APIResponse(
+                success=False,
+                message="No fue posible actualizar el paquete turístico en este momento.",
                 error_code=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
