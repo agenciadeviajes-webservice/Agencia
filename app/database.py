@@ -1,5 +1,6 @@
-from sqlalchemy import create_engine, Column, Integer, String, Date, Float
-from sqlalchemy.orm import sessionmaker, declarative_base
+from sqlalchemy import create_engine, Column, Integer, String, Date, Float, ForeignKey, DateTime
+from sqlalchemy.orm import sessionmaker, declarative_base, relationship
+from datetime import datetime
 
 # Configuración de Conexión
 DATABASE_URL = "sqlite:///./usuarios.db"
@@ -21,7 +22,7 @@ class UserDB(Base):
     telefono = Column(String, nullable=False) # Agregado HU-05
     email = Column(String, unique=True, nullable=False)
     fecha_nacimiento = Column(Date, nullable=False) # Agregado HU-05
-    password_hashed = Column(String, nullable=False) # Agregado HU-06 (Login)
+    password_hashed = Column(String, nullable=True) # Agregado HU-06 (Login)
 
 
 # 2. TABLA PAQUETES (HU-04)
@@ -36,6 +37,33 @@ class PaqueteDB(Base):
     tipo_paquete = Column(String)
     tours_incluidos = Column(String) 
     cupos = Column(Integer, default=0)
+
+class ReservaDB(Base):
+    __tablename__ = 'reserva'
+    id = Column(Integer, primary_key=True, index=True)
+    id_cliente = Column(Integer, ForeignKey('usuarios.id'), nullable=False) # Cliente que reserva
+    id_paquete = Column(Integer, ForeignKey('paquetes.id'), nullable=False) # Paquete reservado
+    numero_personas = Column(Integer, nullable=False)
+    monto_total = Column(Float, nullable=False) 
+    metodo_pago = Column(String) # Lo pide la solicitud, aunque el pago se hace después
+    estado = Column(String, default="Pendiente", nullable=False) 
+    # Relaciones para validación
+    cliente = relationship("UserDB")
+    paquete = relationship("PaqueteDB")
+
+# --- MODELO DE PAGO (Para registrar la transacción) ---
+class PagoDB(Base):
+    __tablename__ = 'pago'
+
+    id = Column(Integer, primary_key=True, index=True)
+    id_reserva = Column(Integer, ForeignKey('reserva.id'), nullable=False)
+    monto = Column(Float, nullable=False)
+    metodo_pago = Column(String, nullable=False)
+    fecha_pago = Column(DateTime, default=datetime.utcnow)
+    estado_pago = Column(String, default="Exitoso", nullable=False)
+
+    # Relación para obtener la reserva
+    reserva = relationship("ReservaDB")
 
 
 # CREACIÓN DE TABLAS
