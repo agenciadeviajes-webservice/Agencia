@@ -4,7 +4,7 @@ from app.config.routers import ROUTERS
 # Importa la lista de TODOS los routers configurados
 app = FastAPI(
 # Crea la aplicación FastAPI
-title="User API",
+title="Agencia de viajes API",
 # Título que aparece en Swagger UI
 description="API con arquitectura en capas",
 # Descripción en la documentación
