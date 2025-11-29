@@ -14,3 +14,9 @@ class PaquetesRepository:
         return self.db.query(PaqueteDB).all()
 
     # --- (Aquí irán los métodos para crear, actualizar y eliminar) ---
+    def crear_paquete(self, paquete_data: PaqueteDB) -> PaqueteDB:
+        """Guarda un nuevo paquete en la base de datos y lo retorna."""
+        self.db.add(paquete_data)
+        self.db.commit()
+        self.db.refresh(paquete_data)
+        return paquete_data
