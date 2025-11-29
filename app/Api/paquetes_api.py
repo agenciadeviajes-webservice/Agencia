@@ -1,10 +1,10 @@
 # app/Api/paquetes_api.py (NUEVO ARCHIVO)
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, Response
 from sqlalchemy.orm import Session
 
 from app.database import SessionLocal
 from app.servicios.paquetes_service import PaquetesService
-from app.dominio.paquetes_model import PaqueteListResponse
+from app.dominio.paquetes_model import PaqueteListResponse, PaqueteCreate, APIResponse
 
 router = APIRouter(prefix="/api/v1/paquetes", tags=["Paquetes"])
 
@@ -24,3 +24,19 @@ def listar_paquetes(db: Session = Depends(get_db)):
     """
     service = PaquetesService(db)
     return service.listar_paquetes()
+
+@router.post("/", response_model=APIResponse, status_code=status.HTTP_201_CREATED)
+# Usamos HTTP 201 para éxito
+def crear_paquete(paquete: PaqueteCreate, response: Response, db: Session = Depends(get_db)):
+    """
+    [HU-02] Registra un nuevo paquete turístico con validaciones.
+    """
+    service = PaquetesService(db)
+    result = service.crear_paquete(paquete)
+
+    if not result.success:
+        # Si la operación falla (400 por validación de fechas o 500 por error interno)
+        # Seteamos el código HTTP de la respuesta con el error_code que nos da el servicio.
+        response.status_code = result.error_code
+    
+    return result
