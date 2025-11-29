@@ -1,5 +1,5 @@
 # app/Dominio/pagos_model.py
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional, Any
 from fastapi import status
 
@@ -32,3 +32,13 @@ class PagoConfirmData(BaseModel):
     idReserva: int
     estadoPago: str # "Confirmado"
     estadoReserva: str # "Confirmada"
+
+class PagoReversarRequest(BaseModel):
+    motivo: str = Field(..., min_length=5, description="Motivo de la reversión del pago.")
+
+# --- MODELO DE DATA EN RESPUESTA DE REVERSIÓN (HU-22) ---
+class PagoReversionData(BaseModel):
+    idPago: int
+    idReserva: int
+    estadoPago: str     # "Revertido"
+    estadoReserva: str  # "Cancelada" o estado final deseado

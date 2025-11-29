@@ -60,3 +60,26 @@ class PagosRepository:
         self.db.refresh(pago)
         
         return reserva, pago
+    
+    def obtener_pago_con_reserva(self, id_pago: int) -> Optional[PagoDB]:
+        """Busca el pago por ID, cargando la relación a la Reserva."""
+        return self.db.query(PagoDB).filter(PagoDB.id == id_pago).first()
+
+    def reversar_pago_y_reserva(self, pago: PagoDB, motivo: str):
+        """Actualiza el estado del pago a 'Revertido' y la reserva a 'Cancelada'."""
+        
+        # El pago debe existir y tener la relación de reserva
+        reserva: ReservaDB = pago.reserva 
+        
+        # 1. Actualizar Pago
+        pago.estado_pago = "Revertido"
+        # Opcional: Podrías añadir un campo en PagoDB para guardar el motivo
+        
+        # 2. Actualizar Reserva
+        reserva.estado = "Cancelada" # La reversión implica una cancelación efectiva
+        
+        self.db.commit()
+        self.db.refresh(reserva)
+        self.db.refresh(pago)
+        
+        return reserva, pago

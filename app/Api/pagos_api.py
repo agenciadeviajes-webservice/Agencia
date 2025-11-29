@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 # Asume que tienes un SessionLocal para get_db, como en el módulo de paquetes
 from app.database import SessionLocal # Asumiendo este import
 from app.servicios.pagos_service import PagosService
-from app.dominio.pagos_model import PagoCreate, APIResponse # Importa los modelos
+from app.dominio.pagos_model import PagoCreate, APIResponse, PagoReversarRequest # Importa los modelos
 
 router = APIRouter(prefix="/api/v1/pagos", tags=["Pagos"])
 
@@ -47,6 +47,25 @@ def confirmar_pago(
     """
     service = PagosService(db)
     result = service.confirmar_pago(idReserva)
+
+    if not result.success:
+        # Controlamos el código HTTP según el error (404, 500)
+        response.status_code = result.error_code
+    
+    return result
+
+@router.put("/{idPago}/reversar", response_model=APIResponse, status_code=status.HTTP_200_OK)
+def reversar_pago(
+    idPago: int,
+    request_data: PagoReversarRequest,
+    response: Response = Response(),
+    db: Session = Depends(get_db)
+):
+    """
+    [HU-22] Reversar un pago confirmado y marca la reserva asociada como 'Cancelada'.
+    """
+    service = PagosService(db)
+    result = service.reversar_pago(idPago, request_data)
 
     if not result.success:
         # Controlamos el código HTTP según el error (404, 500)
