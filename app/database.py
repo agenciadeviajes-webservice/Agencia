@@ -1,42 +1,44 @@
-from sqlalchemy import create_engine, Column, Integer, String
-# Importa herramientas de SQLAlchemy para crear la base de datos
-from sqlalchemy.ext.declarative import declarative_base
-# Para crear una clase base que usarán todos los modelos
-from sqlalchemy.orm import sessionmaker
-# Para crear sesiones que permiten hacer consultas a la BD
+from sqlalchemy import create_engine, Column, Integer, String, Date, Float
+from sqlalchemy.orm import sessionmaker, declarative_base
 
+# Configuración de Conexión
 DATABASE_URL = "sqlite:///./usuarios.db"
-# La ruta donde se guardará el archivo de base de datos SQLite
 
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
-# Crea el motor de base de datos que conectará con SQLite
-# check_same_thread=False permite usar SQLite con FastAPI
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-# Crea una fábrica de sesiones para interactuar con la BD
-# autocommit=False: los cambios deben confirmarse manualmente con commit()
 
 Base = declarative_base()
-# Clase base para todos los modelos de la base de datos
 
 
+# 1. TABLA CLIENTES/USUARIOS (HU-05 y HU-06)
 class UserDB(Base):
-    # Define la estructura de la tabla "usuarios" en la base de datos
-    __tablename__ = "usuarios"  
-    # Nombre de la tabla en SQLite
+    __tablename__ = "usuarios" 
 
     id = Column(Integer, primary_key=True, index=True)
-    # Columna 'id': número entero, clave primaria, se autoincrementa
-
+    documento = Column(String, unique=True, index=True, nullable=False) # Agregado HU-05
     name = Column(String, nullable=False)
-    # Columna 'name': texto, obligatorio (no puede estar vacío)
-
+    telefono = Column(String, nullable=False) # Agregado HU-05
     email = Column(String, unique=True, nullable=False)
-    # Columna 'email': texto único (no se pueden repetir emails), obligatorio
-
-    age = Column(Integer)
-    # Columna 'age': número entero, opcional
+    fecha_nacimiento = Column(Date, nullable=False) # Agregado HU-05
+    password_hashed = Column(String, nullable=False) # Agregado HU-06 (Login)
 
 
+# 2. TABLA PAQUETES (HU-04)
+class PaqueteDB(Base):
+    __tablename__ = "paquetes"
+
+    id = Column(Integer, primary_key=True, index=True)
+    destino = Column(String, nullable=False, index=True)
+    fecha_inicio = Column(Date, nullable=False)
+    fecha_fin = Column(Date, nullable=False)
+    precio = Column(Float, nullable=False) 
+    tipo_paquete = Column(String)
+    tours_incluidos = Column(String) 
+    cupos = Column(Integer, default=0)
+
+
+# CREACIÓN DE TABLAS
+# ESTE COMANDO CREA AMBAS TABLAS (usuarios y paquetes) a la vez.
+# Va fuera de cualquier clase.
 Base.metadata.create_all(bind=engine)
-# Crea todas las tablas en la base de datos (ejecuta CREATE TABLE)
