@@ -32,3 +32,31 @@ class PagosRepository:
         self.db.refresh(nuevo_pago)
         
         return nuevo_pago
+    
+    def obtener_reserva_y_pago(self, id_reserva: int) -> tuple[Optional[ReservaDB], Optional[PagoDB]]:
+        """Busca la reserva y el último pago registrado para esa reserva."""
+        reserva = self.db.query(ReservaDB).filter(ReservaDB.id == id_reserva).first()
+        
+        # Buscar el último pago registrado (el que tiene estado "Exitoso")
+        pago = (
+            self.db.query(PagoDB)
+            .filter(PagoDB.id_reserva == id_reserva)
+            .order_by(PagoDB.fecha_pago.desc()) # Último pago primero
+            .first()
+        )
+        return reserva, pago
+
+    def confirmar_pago_y_reserva(self, reserva: ReservaDB, pago: PagoDB):
+        """Actualiza el estado del pago y de la reserva."""
+        
+        # Actualizar Pago
+        pago.estado_pago = "Confirmado"
+        
+        # Actualizar Reserva
+        reserva.estado = "Confirmada" 
+        
+        self.db.commit()
+        self.db.refresh(reserva)
+        self.db.refresh(pago)
+        
+        return reserva, pago

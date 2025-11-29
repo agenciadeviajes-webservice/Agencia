@@ -1,7 +1,7 @@
 # app/Servicios/pagos_service.py
 from sqlalchemy.orm import Session
 from app.repositorio.pagos_repository import PagosRepository
-from app.dominio.pagos_model import PagoCreate, APIResponse, PagoData
+from app.dominio.pagos_model import PagoCreate, APIResponse, PagoData, PagoConfirmData
 from fastapi import status
 
 class PagosService:
@@ -59,4 +59,53 @@ class PagosService:
                 message="Error interno del servidor. Intente más tarde.",
                 data={"details": "Falla de conexión a la base de datos o error de integridad."},
                 error_code=status.HTTP_500_INTERNAL_SERVER_ERROR # 500
+            )
+        
+    def confirmar_pago(self, id_reserva: int) -> APIResponse:
+        try:
+            # 1. Obtener Reserva y Pago asociado (HU-21: Caso 2 - 404)
+            reserva, pago = self.repository.obtener_reserva_y_pago(id_reserva)
+            
+            if not reserva:
+                return APIResponse(
+                    success=False,
+                    message="Reserva no encontrada",
+                    data={"details": f"Reserva con ID {id_reserva} no existe."},
+                    error_code=status.HTTP_404_NOT_FOUND
+                )
+            
+            # Un pago debe existir para ser confirmado, y debe estar en 'Exitoso'
+            if not pago or pago.estado_pago != "Exitoso":
+                return APIResponse(
+                    success=False,
+                    message="Reserva no encontrada o pago ya confirmado",
+                    data={"details": "No hay un pago 'Exitoso' pendiente de confirmación para esta reserva."},
+                    error_code=status.HTTP_404_NOT_FOUND
+                )
+            
+            # 2. Confirmar Pago y Reserva (HU-21: Caso 1 - 200)
+            reserva_actualizada, pago_actualizado = self.repository.confirmar_pago_y_reserva(reserva, pago)
+            
+            # 3. Respuesta Exitosa
+            confirm_data = PagoConfirmData(
+                idReserva=id_reserva,
+                estadoPago=pago_actualizado.estado_pago,
+                estadoReserva=reserva_actualizada.estado
+            )
+            
+            return APIResponse(
+                success=True,
+                message="Pago confirmado y reserva actualizada",
+                data=confirm_data
+            )
+        
+        except Exception as e:
+            # 4. Error Interno (HU-21: Caso 3 - 500)
+            print(f"Error interno al confirmar pago: {e}")
+            # Aquí podrías registrar el log de la excepción
+            return APIResponse(
+                success=False,
+                message="Error interno del servidor",
+                data={"details": "Falla de conexión a la base de datos o error inesperado."},
+                error_code=status.HTTP_500_INTERNAL_SERVER_ERROR
             )

@@ -35,3 +35,21 @@ def registrar_pago(
         response.status_code = result.error_code
     
     return result
+
+@router.put("/{idReserva}/confirmar", response_model=APIResponse, status_code=status.HTTP_200_OK)
+def confirmar_pago(
+    idReserva: int,
+    response: Response = Response(),
+    db: Session = Depends(get_db)
+):
+    """
+    [HU-21] Confirma un pago registrado (estado 'Exitoso') y actualiza la reserva a 'Confirmada'.
+    """
+    service = PagosService(db)
+    result = service.confirmar_pago(idReserva)
+
+    if not result.success:
+        # Controlamos el código HTTP según el error (404, 500)
+        response.status_code = result.error_code
+    
+    return result
