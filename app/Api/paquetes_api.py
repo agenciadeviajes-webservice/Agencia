@@ -62,3 +62,22 @@ def actualizar_paquete(
         response.status_code = result.error_code
     
     return result
+
+@router.delete("/{id_paquete}", response_model=APIResponse, status_code=status.HTTP_200_OK)
+def eliminar_paquete(
+    # Usamos el nombre exacto de la URL para evitar el error de Swagger
+    id_paquete: int = Path(..., gt=0), 
+    response: Response = Response(),
+    db: Session = Depends(get_db)
+):
+    """
+    [HU-04] Elimina un paquete turístico por su ID.
+    """
+    service = PaquetesService(db)
+    result = service.eliminar_paquete(id_paquete)
+
+    if not result.success:
+        # Asigna 404 o 500 según el error del servicio
+        response.status_code = result.error_code
+    
+    return result
