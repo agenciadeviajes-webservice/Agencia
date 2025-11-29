@@ -68,3 +68,61 @@ class ReservasService:
                 data={"details": "Falla de conexión a la base de datos o error inesperado."},
                 error_code=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+        
+    def cancelar_reserva(self, id_reserva: int) -> APIResponse:
+        try:
+            # 1. Verificar existencia de reserva
+            reserva = self.repository.obtener_reserva(id_reserva)
+            if not reserva:
+                return APIResponse(
+                    success=False,
+                    message="Reserva no encontrada o no puede ser cancelada",
+                    data=None,
+                    error_code=status.HTTP_404_NOT_FOUND,
+                    details="ID de reserva inválido"
+                )
+
+            # 2. Validar estado permitido
+            if reserva.estado not in ["Pendiente", "Confirmada"]:
+                return APIResponse(
+                    success=False,
+                    message="No se puede cancelar esta reserva",
+                    data=None,
+                    error_code=status.HTTP_400_BAD_REQUEST,
+                    details=f"Estado actual: {reserva.estado}"
+                )
+
+            # 3. Obtener paquete
+            paquete = self.repository.obtener_paquete(reserva.id_paquete)
+            if not paquete:
+                return APIResponse(
+                    success=False,
+                    message="Error interno",
+                    data=None,
+                    error_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    details="Paquete asociado no existe"
+                )
+
+            # 4. Cancelar reserva
+            reserva_cancelada = self.repository.cancelar_reserva(reserva, paquete)
+
+            data_response = {
+                "idReserva": reserva_cancelada.id,
+                "estado": reserva_cancelada.estado
+            }
+
+            return APIResponse(
+                success=True,
+                message="Reserva cancelada exitosamente",
+                data=data_response
+            )
+
+        except Exception as e:
+            print(f"[ERROR] cancelar_reserva: {e}")
+            return APIResponse(
+                success=False,
+                message="Error interno del servidor",
+                data=None,
+                error_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                details=str(e)
+            )

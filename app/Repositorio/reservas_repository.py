@@ -35,3 +35,24 @@ class ReservasRepository:
         self.db.refresh(nueva_reserva)
         
         return nueva_reserva
+    
+    def obtener_reserva(self, id_reserva: int) -> Optional[ReservaDB]:
+        """Obtiene una reserva por ID."""
+        return self.db.query(ReservaDB).filter(ReservaDB.id == id_reserva).first()
+
+    def cancelar_reserva(self, reserva: ReservaDB, paquete: PaqueteDB) -> ReservaDB:
+        """Cancela la reserva y libera cupos del paquete."""
+        
+        # Cambiar estado
+        reserva.estado = "Cancelada"
+
+        # Liberar cupos
+        paquete.cupos += reserva.numero_personas
+
+        # Guardar cambios
+        self.db.commit()
+        self.db.refresh(reserva)
+
+        print(f"[LOG] Reserva {reserva.id} cancelada. Cupos liberados: {reserva.numero_personas}")
+
+        return reserva
