@@ -59,3 +59,7 @@ class PaqueteListResponse(BaseModel):
     success: bool
     mensaje: str = Field(alias='message')
     data: List[PaqueteListItem]
+
+# --- [NUEVO] MODELO PARA DATA DE ELIMINACIÓN (HU-04) ---
+class PaqueteDeleteData(BaseModel):
+    id_paquete: int

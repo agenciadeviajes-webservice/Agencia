@@ -1,7 +1,7 @@
 # app/Servicios/paquetes_service.py (NUEVO ARCHIVO)
 from sqlalchemy.orm import Session
 from app.repositorio.paquetes_repository import PaquetesRepository
-from app.dominio.paquetes_model import PaqueteListResponse, PaqueteListItem, PaqueteCreate, APIResponse, PaqueteData
+from app.dominio.paquetes_model import PaqueteListResponse, PaqueteListItem, PaqueteCreate, APIResponse, PaqueteData, PaqueteDeleteData
 from app.database import PaqueteDB
 from fastapi import status 
 from typing import List
@@ -122,5 +122,37 @@ class PaquetesService:
             return APIResponse(
                 success=False,
                 message="No fue posible actualizar el paquete turístico en este momento.",
+                error_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        
+    def eliminar_paquete(self, id_paquete: int) -> APIResponse:
+        
+        # 1. Verificar Existencia (HU-04: Caso 2 - 404)
+        paquete_existente = self.repository.obtener_por_id(id_paquete)
+        if not paquete_existente:
+            return APIResponse(
+                success=False,
+                message="No fue posible eliminar el paquete turístico. Verifique el ID proporcionado.",
+                error_code=status.HTTP_404_NOT_FOUND
+            )
+
+        try:
+            # 2. Intentar Eliminar en BD
+            self.repository.eliminar_paquete(paquete_existente)
+
+            # 3. Respuesta Exitosa (HU-04: Caso 1 - 200)
+            return APIResponse(
+                success=True,
+                message="Paquete turístico eliminado correctamente",
+                data=PaqueteDeleteData(id_paquete=id_paquete)
+            )
+            
+        except Exception as e:
+            # 4. Error en Base de Datos (HU-04: Caso 3 - 500)
+            # Esto pasa si el paquete tiene reservas asociadas u otro error de SQL
+            print(f"Error al eliminar paquete ID {id_paquete}: {e}")
+            return APIResponse(
+                success=False,
+                message="Error interno al intentar eliminar el paquete turístico.",
                 error_code=status.HTTP_500_INTERNAL_SERVER_ERROR
             )

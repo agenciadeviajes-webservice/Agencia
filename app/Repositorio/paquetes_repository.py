@@ -37,3 +37,12 @@ class PaquetesRepository:
         self.db.commit()
         self.db.refresh(paquete_existente)
         return paquete_existente
+    
+    # --- MÉTODO HU-04: ELIMINAR PAQUETE (VERSIÓN BLINDADA) ---
+    def eliminar_paquete(self, paquete_existente: PaqueteDB):
+        """Elimina el paquete usando una consulta directa (más seguro)."""
+        
+        # En lugar de self.db.delete(paquete_existente), usamos esto:
+        self.db.query(PaqueteDB).filter(PaqueteDB.id == paquete_existente.id).delete()
+        
+        self.db.commit()
