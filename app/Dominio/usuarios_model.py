@@ -1,20 +1,31 @@
 from pydantic import BaseModel, EmailStr
-
+from datetime import date
+from typing import Optional
 
 class UserCreate(BaseModel):
-    # Modelo para CREAR un usuario (lo que envía el cliente)
+    # Lo que envia el frontend
+    documento: str
     name: str
+    telefono: str
     email: EmailStr
-    age: int
+    fecha_nacimiento: date # Pydantic valida formato YYYY-MM-DD
 
-
-class UserResponse(BaseModel):
-    # Modelo para MOSTRAR un usuario (lo que devuelve tu API)
+class UserData(BaseModel):
+    # Datos internos del usuario para la respuesta
     id: int
+    documento: str
     name: str
+    telefono: str
     email: str
-    age: int
+    fecha_nacimiento: date
 
     class Config:
         from_attributes = True
-        # Permite convertir objetos SQLAlchemy -> Pydantic
+
+class APIResponse(BaseModel):
+    # La respuesta "envoltorio" estandarizada
+    success: bool
+    message: str
+    data: Optional[UserData] = None
+    error_code: Optional[int] = None
+    details: Optional[str] = None

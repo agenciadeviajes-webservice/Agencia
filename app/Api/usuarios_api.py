@@ -1,14 +1,12 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Response, status
 from sqlalchemy.orm import Session
 
 from app.database import SessionLocal
 from app.servicios.usuarios_service import UsuariosService
-from app.dominio.usuarios_model import UserCreate, UserResponse
+from app.dominio.usuarios_model import UserCreate, APIResponse
 
-router = APIRouter(prefix="/users", tags=["Users"])
+router = APIRouter(prefix="/api/v1/clientes", tags=["Clientes"]) 
 
-
-# Dependencia para obtener la sesión de BD
 def get_db():
     db = SessionLocal()
     try:
@@ -16,16 +14,18 @@ def get_db():
     finally:
         db.close()
 
-
-@router.post("/", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
-def create_user(user: UserCreate, db: Session = Depends(get_db)):
-    """Crea un nuevo usuario"""
+@router.post("/", response_model=APIResponse, status_code=status.HTTP_200_OK)
+def create_client(user: UserCreate, response: Response, db: Session = Depends(get_db)):
+    """
+    Registra un nuevo cliente.
+    Siempre devuelve HTTP 200 si hubo conexión.
+    El éxito o error se lee en el campo 'success' del JSON.
+    """
     service = UsuariosService(db)
-    return service.create_user(user)
-
-
-@router.get("/{user_id}", response_model=UserResponse)
-def get_user(user_id: int, db: Session = Depends(get_db)):
-    """Obtiene un usuario por ID"""
-    service = UsuariosService(db)
-    return service.get_user(user_id)
+    result = service.create_user(user)
+    
+    # OJO: Ya NO cambiamos el response.status_code a 400.
+    # Siempre dejamos que FastAPI retorne el 200 OK que definimos en el decorador.
+    # El frontend leerá el JSON: { "success": false, ... } para saber que falló.
+    
+    return result
