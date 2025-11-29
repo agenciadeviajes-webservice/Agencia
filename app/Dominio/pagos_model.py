@@ -26,3 +26,9 @@ class APIResponse(BaseModel):
     message: str
     data: Optional[Any] = None
     error_code: Optional[int] = status.HTTP_200_OK
+
+# --- MODELO DE DATA EN RESPUESTA DE CONFIRMACIÓN (HU-21) ---
+class PagoConfirmData(BaseModel):
+    idReserva: int
+    estadoPago: str # "Confirmado"
+    estadoReserva: str # "Confirmada"
