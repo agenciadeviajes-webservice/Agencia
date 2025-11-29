@@ -35,3 +35,20 @@ def crear_reserva(
         response.status_code = result.error_code
     
     return result
+
+@router.delete("/{idReserva}", response_model=APIResponse, status_code=status.HTTP_200_OK)
+def cancelar_reserva(
+    idReserva: int,
+    response: Response,
+    db: Session = Depends(get_db)
+):
+    """
+    [HU-25] Cancelar Reserva
+    """
+    service = ReservasService(db)
+    result = service.cancelar_reserva(idReserva)
+
+    if not result.success:
+        response.status_code = result.error_code
+    
+    return result
