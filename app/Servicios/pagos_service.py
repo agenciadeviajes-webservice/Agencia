@@ -1,7 +1,7 @@
 # app/Servicios/pagos_service.py
 from sqlalchemy.orm import Session
 from app.repositorio.pagos_repository import PagosRepository
-from app.dominio.pagos_model import PagoCreate, APIResponse, PagoData, PagoConfirmData
+from app.dominio.pagos_model import PagoCreate, APIResponse, PagoData, PagoConfirmData, PagoReversarRequest, PagoReversionData
 from fastapi import status
 
 class PagosService:
@@ -106,6 +106,55 @@ class PagosService:
             return APIResponse(
                 success=False,
                 message="Error interno del servidor",
+                data={"details": "Falla de conexión a la base de datos o error inesperado."},
+                error_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        
+    def reversar_pago(self, id_pago: int, data: PagoReversarRequest) -> APIResponse:
+        try:
+            # 1. Obtener Pago (HU-22: Caso 2 - 404)
+            pago = self.repository.obtener_pago_con_reserva(id_pago)
+            
+            if not pago:
+                return APIResponse(
+                    success=False,
+                    message="Pago no encontrado o ya revertido",
+                    data={"details": f"Pago con ID {id_pago} no existe."},
+                    error_code=status.HTTP_404_NOT_FOUND
+                )
+            
+            # 2. Validación de estado previo: Debe estar 'Confirmado'
+            if pago.estado_pago != "Confirmado":
+                return APIResponse(
+                    success=False,
+                    message="Pago no encontrado o ya revertido",
+                    data={"details": f"El pago (ID {id_pago}) no está 'Confirmado' (Estado actual: {pago.estado_pago})."},
+                    error_code=status.HTTP_404_NOT_FOUND
+                )
+            
+            # 3. Reversar Pago y Reserva (HU-22: Caso 1 - 200)
+            reserva_actualizada, pago_actualizado = self.repository.reversar_pago_y_reserva(pago, data.motivo)
+            
+            # 4. Respuesta Exitosa
+            reversion_data = PagoReversionData(
+                idPago=id_pago,
+                idReserva=reserva_actualizada.id,
+                estadoPago=pago_actualizado.estado_pago,
+                estadoReserva=reserva_actualizada.estado
+            )
+            
+            return APIResponse(
+                success=True,
+                message="Pago revertido exitosamente",
+                data=reversion_data
+            )
+        
+        except Exception as e:
+            # 5. Error Interno (HU-22: Caso 3 - 500)
+            print(f"Error interno al reversar pago: {e}")
+            return APIResponse(
+                success=False,
+                message="Error interno al procesar la reversión",
                 data={"details": "Falla de conexión a la base de datos o error inesperado."},
                 error_code=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
